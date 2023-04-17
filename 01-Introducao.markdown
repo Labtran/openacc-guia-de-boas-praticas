@@ -136,7 +136,7 @@ gestão da memória do acelerador e a transferência de dados entre o hospedeiro
 memória do dispositivo. A figura 1.1 mostra um diagrama de alto nível do resumo do acelerador OpenACC, mas lembre-se que os dispositivos e memórias podem ser fisicamente o
 o mesmo em algumas arquitecturas.
 
-![OpenACC's Abstract Accelerator Model](images/execution_model2.png)
+![OpenACC's Modelo Abstrato do Accelerador](images/execution_model2.png)
 
 Mais detalhes do modelo de acelerador abstracto do OpenACC serão apresentados
 ao longo deste guia, quando forem pertinentes. 
