@@ -3,7 +3,7 @@ Introdução
 Este guia apresenta métodos e melhores práticas para acelerar as aplicações
 de uma forma incremental e portátil de desempenho. Embora alguns dos exemplos possam
 mostrar resultados utilizando um determinado compilador ou acelerador, a informação apresentada
-neste documento destina-se a abordar todas as arquitecturas, ambas disponíveis em
+neste documento destina-se a abordar todas as arquiteturas, ambas disponíveis em
 tempo de publicação e bem como para o futuro. Os leitores devem estar à vontade com
 C, C++, ou Fortran, mas não necessitam de experiência com programação paralela ou
 computação acelerada, embora tal experiência seja útil.
@@ -13,13 +13,13 @@ Note: This guide is a community effort. To contribute, please visit the project
 
 Escrevendo um Código Portátil
 ---------------------
-O atual panorama é visto com uma variedade de arquitecturas de computação: CPUs multi-core, GPUs, dispositivos multi-core, DSPs, processadores ARM, e FPGAs, para citar alguns. É agora comum encontrar não apenas uma, mas várias destas
+O atual panorama é visto com uma variedade de arquiteturas de computação: CPUs multi-core, GPUs, dispositivos multi-core, DSPs, processadores ARM, e FPGAs, para citar alguns. Agora é comum encontrar não apenas uma, mas várias destas
 arquiteturas diferentes dentro da mesma máquina. Os programadores devem fazer
 a portabilidade do seu código, caso contrário arriscam-se a bloquear a sua
 aplicação a uma única arquitetura, o que pode limitar a capacidade de rodar em
 arquiteturas futuras. Embora a variedade de arquiteturas possa parecer assustadora
 para o programador, uma análise mais atenta revela tendências que mostram muito em comum
-entre elas. A primeira coisa a notar é que todas estas arquitecturas estão
+entre elas. A primeira coisa a notar é que todas estas arquiteturas estão
 movendo-se no sentido de um maior paralelismo. As CPUs não estão apenas adicionando núcleos de CPU
 mas também expandindo a duração das suas operações SIMD. As GPUs têm crescido para um elevado grau de paralelismo de blocos e SIMT. É evidente que ir através de
 todas as arquiteturas necessita de um grau significativo de paralelismo
@@ -29,7 +29,7 @@ com diferentes graus de dificuldade. A próxima coisa a notar é que todas
 estas arquiteturas têm exposto hierarquias de memória. As CPUs têm a principal
 memória do sistema, tipicamente DDR, e múltiplas camadas de memória cache. As GPUs têm a memória principal da CPU, a memória principal da GPU, e vários graus de memória cache ou scratchpad. Adicionalmente em arquiteturas híbridas, que incluem duas ou mais arquiteturas diferentes, existem máquinas onde as duas arquiteturas têm memórias completamente separadas, algumas com separação física mas logicamente a mesma memória, e outras com memória totalmente partilhada.
 
-Devido a estas complexidades, é importante que os criadores escolham um
+Devido a estas complexidades, é importante que os desenvolvedores escolham um
 modelo de programação que equilibra a necessidade de portabilidade com a necessidade de
 desempenho. Abaixo estão quatro modelos de programação variando em diferentes graus de
 portabilidade e desempenho. Numa aplicação real, o melhor é utilizar frequentemente
@@ -43,7 +43,7 @@ portabilidade porque o programador pode frequentemente substituir apenas a bibli
 utilizada sem sequer alterar o próprio código fonte quando altera a arquitetura. Uma vez que muitos vendedores de hardware fornecem versões altamente customizadas de
 bibliotecas comuns, o uso de bibliotecas também pode resultar num desempenho muito elevado.
 Embora as bibliotecas possam fornecer tanto alta portabilidade como alto desempenho, poucas
-são as aplicações só podem utilizar bibliotecas devido ao seu âmbito limitado.
+são as aplicações que só podem utilizar bibliotecas devido ao seu âmbito limitado.
     
 Alguns vendedores fornecem bibliotecas adicionais como um valor adicional para sua plataforma
 mas implementam APIs não-padronizados. Estas bibliotecas fornecem
@@ -53,7 +53,7 @@ limitar o impacto na portabilidade global da aplicação.
 
 ### Linguagens de Programação Standard ###
 
-Muitas linguagens de programação padrão têm ou estão  a adotar
+Muitas linguagens de programação padrão têm ou estão  adotando
 características para programação paralela. Por exemplo, a Fortran 2008 acrescentou apoio
 para `do concurrent`, o que expõe o potencial paralelismo com esse laço,
 e C++17 acrescentou apoio para `std::execution`, que permite aos utilizadores exprimir
@@ -61,12 +61,12 @@ paralelismo com certas estruturas de laço.
 A adoção destas características de linguagem é frequentemente lenta, e muitas linguagens padrão
 só agora começam a discutir as características de programação paralela para futuros
 lançamentos. Quando estas características se tornarem comuns, fornecerão
-portabilidade, uma vez que fazem parte de uma linguagem padrão, e se forem bem concebidas
+portabilidade, uma vez que farão parte de uma linguagem padrão, e se forem bem concebidas
 também pode proporcionar alto desempenho.
 
 ### Diretivas do Compilador ###
 
-Quando as linguagens de programação padrão não têm suporte para as características necessárias as
+Quando as linguagens de programação padrão não têm suporte para as características necessárias, as
 diretivas de compilação podem fornecer funcionalidades adicionais. As diretivas, na
 forma de pragmas em C/C++ e comentários em Fortran, fornecem mais
 informação aos compiladores sobre como construir e/ou optimizar o código. A maioria dos
@@ -88,10 +88,9 @@ para dar capacidades adicionais de programação paralela. O código escrito nes
 linguagens está frequentemente a um nível inferior ao de outras opções, mas o resultado
 pode frequentemente alcançar um desempenho superior. No nível mais baixo
 os detalhes são expostos e a forma como um problema é decomposto no hardware
-deve ser explicitamente gerido com essas linguagens. Esta é a melhor opção quando
+deve ser explicitamente gerido por essas linguagens. Esta é a melhor opção quando
 os objetivos de desempenho superam a portabilidade, uma vez que a natureza de baixo nível das
-linguagens de programação tornam frequentemente o código resultante menos portátil. Boas práticas de engenharia de software podem reduzir o impacto que estas linguagens têm sobre
-portabilidade.
+linguagens de programação tornam frequentemente o código resultante menos portátil. Boas práticas de engenharia de software podem reduzir o impacto que estas linguagens têm sobre portabilidade.
 
 ----
 
@@ -112,15 +111,15 @@ computacional, os programadores desejam a capacidade de programar usando um
 modelo de programação de alto nível que proporcione tanto alto desempenho como portabilidade para
 uma vasta gama de arquiteturas computacionais. O OpenACC surgiu em 2011 como um
 modelo de programação que utiliza diretivas de compilação de alto nível para expor
-paralelismo no código e paralelização de compiladores para construir o código para um
+paralelismo no código e paralelização de compiladores para construir o código para uma
 variedade de aceleradores paralelos. Este documento pretende ser uma boa prática e um
 guia para acelerar uma aplicação usando OpenACC para dar a ambos um bom
 desempenho e portabilidade a outros dispositivos.
 
 ### O Modelo de Aceleração OpenACC ###
 A fim de assegurar que o OpenACC seria portátil para todos os computadores
-e arquitecturas disponíveis no momento do seu início e no futuro,
-O OpenACC define um modelo abstracto para computação acelerada. Este modelo expõe
+e arquiteturas disponíveis no momento do seu início e no futuro,
+o OpenACC define um modelo abstracto para computação acelerada. Este modelo expõe
 múltiplos níveis de paralelismo que podem aparecer num processador, bem como numa
 hierarquia de memórias com diferentes graus de velocidade e endereçamento. O
 objectivo deste modelo é assegurar que o OpenACC seja aplicável a mais do que apenas uma
@@ -133,8 +132,7 @@ hospedeiro e acelerador GPU. Os dois dispositivos podem também ter espaços de 
 ou um único espaço de memória. No caso de os dois dispositivos terem diferentes
 memórias o compilador OpenACC e o runtime analisarão o código e manipularão qualquer
 gestão da memória do acelerador e a transferência de dados entre o hospedeiro e a
-memória do dispositivo. A figura 1.1 mostra um diagrama de alto nível do resumo do acelerador OpenACC, mas lembre-se que os dispositivos e memórias podem ser fisicamente o
-o mesmo em algumas arquitecturas.
+memória do dispositivo. A figura 1.1 mostra um diagrama de alto nível do resumo do acelerador OpenACC, mas lembre-se que os dispositivos e memórias podem ser fisicamente o mesmo em algumas arquiteturas.
 
 ![OpenACC's Modelo Abstrato do Accelerador](images/execution_model2.png)
 
@@ -145,7 +143,7 @@ ao longo deste guia, quando forem pertinentes.
 
 ***Boas Práticas:*** Para programadores que chegam ao OpenACC a partir de outros
 modelos de programação acelerada, tais como CUDA ou OpenCL, onde a memória do anfitrião e do acelerador
-é frequentemente representada por duas variáveis distintas (`host_A[]` e
+são frequentemente representadas por duas variáveis distintas (`host_A[]` e
 `device_A[]`, por exemplo), é importante lembrar que ao utilizar o OpenACC
 uma variável deve ser pensada como um único objecto, independentemente de como
 é suportado pela memória em um ou mais espaços de memória. 
@@ -155,7 +153,7 @@ então é possível escrever programas que acessem a variável de
 formas inseguras, resultando em códigos que não seriam portáteis para dispositivos que partilham
 uma única memória entre o hospedeiro e o dispositivo. Como em qualquer programa paralelo ou
 paradigma de programação assíncrona, acedendo à mesma variável a partir de duas
-secções de código podem resultar simultaneamente numa race condition que produza
+secções de código podem resultar simultaneamente numa `race condition` que produza
 resultados inconsistentes. 
 
 Assumindo que se está sempre acessando a uma única variável ,independentemente de como é armazenada na memória, o programador irá evitar
@@ -166,14 +164,14 @@ O OpenACC foi concebido para ser uma linguagem de alto nível e independente de 
 aceleradores de programação. Como tal, é possível desenvolver um único código fonte que
 pode ser executado numa gama de dispositivos e alcançar um bom desempenho. A simplicidade
 e a portabilidade que o modelo de programação do OpenACC proporciona, por vezes
-custo para o desempenho. O modelo de acelerador abstracto OpenACC define um mínimo
-denominador comum para dispositivos aceleradores, mas não pode representar arquitetura
-específicas destes dispositivos sem tornar a linguagem menos portátil. Aí
-serão sempre algumas optimizações que são possíveis num nível inferior de modelo de programação, como a CUDA ou OpenCL, que não pode ser representada a um nível
+pode custar o desempenho. O modelo de acelerador abstracto OpenACC define um mínimo
+denominador comum para dispositivos aceleradores, mas não pode representar arquiteturas
+específicas destes dispositivos sem tornar a linguagem menos portátil. Nesse caso,
+serão sempre algumas optimizações que serão possíveis num nível inferior de modelo de programação, como a CUDA ou OpenCL, que não pode ser representada a um nível
 alto. Por exemplo, embora o OpenACC tenha a directiva "cache", algumas utilizações de
 *memória partilhada* em GPUs NVIDIA são mais facilmente representadas usando CUDA. O mesmo
 é verdade para qualquer anfitrião ou dispositivo: certas optimizações são de nível demasiado baixo para um
-abordagem de alto nível como o OpenACC. Cabe aos programadores determinar a
+abordagem de alto nível como o OpenACC. Cabe aos programadores determinar o
 custo e benefício da utilização selectiva de uma linguagem de programação de nível inferior para
 secções críticas do código de desempenho. Nos casos em que o desempenho é demasiado
 crítico para adoptar uma abordagem de alto nível, ainda é possível utilizar o OpenACC para
