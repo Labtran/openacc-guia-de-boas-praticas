@@ -186,30 +186,28 @@ directives, please see [http://www.pgroup.com/lit/articles/insider/v4n2a1.htm].
 
 ---
 
-At this point many programmers will be left wondering which directive they
-should use in their code. More experienced parallel programmers, who may have
-already identified parallel loops within their code, will likely find the
-`parallel loop` approach more desirable. Programmers with less parallel
-programming experience or whose code contains a large number of loops that need
-to be analyzed may find the `kernels` approach much simpler, as it puts more of
-the burden on the compiler. Both approaches have advantages, so new OpenACC
-programmers should determine for themselves which approach is a better fit for
-them. A programmer may even choose to use `kernels` in one part of the code,
-but `parallel` in another if it makes sense to do so.
+Nesta altura, muitos programadores ficarão pensando qual diretiva
+devem utilizar no seu código. Os programadores paralelos mais experientes, que podem ter
+já identificado laços paralelos dentro do seu código, encontrarão provavelmente a
+abordagem `parallel loop` mais desejável. Programadores com menos experiência em programação paralela ou cujo código contém um grande número de laços que necessitam
+de análise pode achar a abordagem `kernels' muito mais simples, uma vez que coloca mais de
+o encargo para o compilador. Ambas as abordagens têm vantagens,  os novos programadores OpenACC
+devem determinar por si próprios qual a abordagem que melhor se adapta. Um programador pode até optar por utilizar `kernels` numa parte do código,
+mas `paralell` na outra, se fizer sentido fazê-lo.
 
-**Note:** For the remainder of the document the phrase *parallel region* will be
-used to describe either a `parallel` or `kernels` region. When refering to the
-`parallel` construct, a terminal font will be used, as shown in this
-sentence.
+**Nota:** Para o restante do documento, a frase *parallel region* será
+utilizado para descrever ou uma região `parallel` ou `kernels`. Ao referir-se à região de
+construção `parallel`, será utilizada uma fonte terminal, como se mostra no presente
+frase.
 
-The Loop Construct
+O Construtor Loop 
 ------------------
-The `loop` construct gives the compiler additional information about the very
-next loop in the source code. The `loop` directive was shown above in
-connection with the `parallel` directive, although it is also valid with
-`kernels`. Loop clauses come in two forms: clauses for correctness and clauses
-for optimization. This chapter will only discuss the two correctness clauses
-and a later chapter will discuss optimization clauses.
+A construção "loop" dá ao compilador informações adicionais sobre todo
+próximo laço no código fonte. A directiva `loop` foi mostrada acima em
+ligação com a directiva `parallel`, embora também seja válida com
+`kernels`. As cláusulas de laço vêm em duas formas: cláusulas de correção e cláusulas
+para optimização. Este capítulo irá discutir apenas as duas cláusulas de correção
+e um capítulo posterior irá discutir cláusulas de optimização.
 
 ### private ###
 The private clause specifies that each loop iteration requires its own copy of
