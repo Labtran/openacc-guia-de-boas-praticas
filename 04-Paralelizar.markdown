@@ -203,77 +203,75 @@ frase.
 O Construtor Loop 
 ------------------
 A construção "loop" dá ao compilador informações adicionais sobre todo
-próximo laço no código fonte. A directiva `loop` foi mostrada acima em
-ligação com a directiva `parallel`, embora também seja válida com
+próximo laço no código fonte. A diretiva `loop` foi mostrada acima em
+ligação com a diretiva `parallel`, embora também seja válida com
 `kernels`. As cláusulas de laço vêm em duas formas: cláusulas de correção e cláusulas
 para optimização. Este capítulo irá discutir apenas as duas cláusulas de correção
 e um capítulo posterior irá discutir cláusulas de optimização.
 
 ### private ###
-The private clause specifies that each loop iteration requires its own copy of
-the listed variables. For example, if each loop contains a small, temporary
-array named `tmp` that it uses during its calculation, then this variable must
-be made private to each loop iteration in order to ensure correct results. If
-`tmp` is not declared private, then threads executing different loop iterations
-may access this shared `tmp` variable in unpredictable ways, resulting in a
-race condition and potentially incorrect results. Below is the synax for the
-`private` clause.
+A cláusula private especifica que cada iteração de laço requer a sua própria cópia das variáveis listadas. Por exemplo, se cada laço contiver um pequeno
+array chamado `tmp` que utiliza durante o seu cálculo, então esta variável deve
+ser privado para cada iteração de laço, a fim de garantir resultados correctos. Se
+o `tmp` não é declarado privado, depois que as threads executam diferentes iterações de laço
+pode aceder a esta variável partilhada `tmp` de forma imprevisível, resultando numa
+condição de `race condition` e resultados potencialmente incorrectos. Abaixo está a sintax para a
+cláusula `private`.
 
     private(var1, var2, var3, ...)
 
-There are a few special cases that must be understood about scalar
-variables within loops. First, loop iterators will be privatized by default, so
-they do not need to be listed as private. Second, unless otherwise specified,
-any scalar accessed within a parallel loop will be made *first private* by
-default, meaning a private copy will be made of the variable for each loop
-iteration and it will be initialized with the value of that scalar upon
-entering the region. Finally, any variables (scalar or not) that are declared
-within a loop in C or C++ will be made private to the iterations of that loop
-by default.
+Há alguns casos especiais que devem ser entendidos sobre variáveis escalares
+dentro de laços. Em primeiro lugar, os iteradores de laço serão privados por padrão, pelo que
+não precisam de ser listados como privados. Em segundo lugar, salvo especificação em contrário,
+qualquer escalar acessada dentro de um laço paralelo será feito *primeiro privado*
+por padrão, o que significa que será feita uma cópia privada da variável para cada laço de
+iteração e será inicializada com o valor dessa escalar
+ao entrar na região. Finalmente, quaisquer variáveis (escalares ou não) que sejam declaradas
+dentro de um laço em C ou C++ será tornada privada para as iterações desse laço
+por padrão.
 
-Note: The `parallel` construct also has a `private` clause which will privatize
-the listed variables for each gang in the parallel region. 
+Nota: A construção `parallel` também tem uma cláusula "privada" que irá tornar privadas
+as variáveis listadas para cada gangue na região paralela. 
 
 ### reduction ###
-The `reduction` clause works similarly to the `private` clause in that a
-private copy of the affected variable is generated for each loop iteration, but
-`reduction` goes a step further to reduce all of those private copies into one
-final result, which is returned from the region. For example, the maximum of
-all private copies of the variable may be required. A
-reduction may only be specified on a scalar variable and only common, specified
-operations can be performed, such as `+`, `*`, `min`, `max`, and various
-bitwise operations (see the OpenACC specification for a complete list). The
-format of the reduction clause is as follows, where *operator* should be
-replaced with the operation of interest and *variable* should be replaced with
-the variable being reduced:
+A cláusula `reduction` funciona de forma semelhante à cláusula `private`, na medida em que
+é gerada uma cópia privada da variável afetada para cada iteração de laço, mas
+`reduction` vai um passo além para reduzir todas essas cópias privadas a um só
+resultado final, que é devolvido da região. Por exemplo, o máximo de
+todas as cópias privadas da variável podem ser necessárias. A
+redução só pode ser especificada numa variável escalar e só comum, operações  especificadas
+podem ser realizadas, tais como `+`, `*`, `min`, `max`, e várias
+operações bitwise (ver a especificação OpenACC para uma lista completa). O formato da cláusula de redução é o seguinte, onde *operador* deve ser
+substituído com a operação de interesse e *variável* deve ser substituído por
+sendo a variável reduzida:
 
     reduction(operator:variable)
 
-An example of using the `reduction` clause will come in the case study below.
+Um exemplo de utilização da cláusula `reduction` será apresentado no estudo de caso abaixo.
 
-Routine Directive
+Diretiva Routine
 -----------------
-Function or subroutine calls within parallel loops can be problematic for
-compilers, since it's not always possible for the compiler to see all of the
-loops at one time. OpenACC 1.0 compilers were forced to either inline all
-routines called within parallel regions or not parallelize loops containing
-routine calls at all. OpenACC 2.0 introduced the `routine` directive to address
-this shortcoming. The `routine` directive gives the compiler the necessary
-information about the function or subroutine and the loops it contains in order
-to parallelize the calling parallel region. The routine directive must be added
-to a function definition informing the compiler of the level of parallelism
-used within the routine. OpenACC's *levels of parallelism* will be discussed in a
-later section.
+As chamadas de funções ou sub-rotinas dentro de laços paralelos podem ser problemáticas para
+compiladores, uma vez que nem sempre é possível para o compilador ver todos os
+laços de uma só vez. Os compiladores do OpenACC 1.0 foram forçados a colocar em linha todas as
+rotinas chamadas dentro de regiões paralelas ou não paralelas, contendo
+chamadas de rotina. OpenACC 2.0 introduziu a directiva `routine` para abordar
+esta lacuna. A diretiva `routine` dá ao compilador a necessária
+informação sobre a função ou sub-rotina e os laços que esta contém em ordem
+para paralelizar a chamada região paralela. A diretiva de rotina deve ser acrescentada
+a uma definição da função que informa o compilador do nível de paralelismo
+utilizado no âmbito da rotina. Os *níveis de paralelismo* do OpenACC serão discutidos numa
+seção posterior.
 
 ### C++ Class Functions ###
-When operating on C++ classes, it's frequently necessary to call class
-functions from within parallel regions. The example below shows a C++ class
-`float3` that contains 3 floating point values and has a `set` function that is
-used to set the values of its `x`, `y`, and `z` members to that of another
-instance of `float3`. In order for this to work from within a parallel region,
-the `set` function is declared as an OpenACC routine using the `routine`
-directive. Since we know that it will be called by each iteration of a parallel
-loop, it's declared a `seq` (or *sequential*) routine. 
+Quando se opera em classes C++, é frequentemente necessário chamar a classe
+funções a partir de regiões paralelas. O exemplo abaixo mostra uma classe C++
+`float3` que contém 3 valores de ponto flutuante e tem uma função `set` que é
+utilizado para definir os valores dos seus membros `x`, `y`, e `z` para os de outro
+exemplo de `float3`. Para que isto funcione a partir de uma região paralela,
+a função `set` é declarada como uma rotina OpenACC utilizando a directiva `routine`. 
+Uma vez que sabemos que será chamada por cada iteração de um laço paralelo
+, é declarada uma rotina `seq` (ou *sequencial*).
 
 ~~~~ {.cpp .numberLines}
     class float3 {
@@ -291,39 +289,35 @@ loop, it's declared a `seq` (or *sequential*) routine.
 
 Atomic Operations
 -----------------
-When one or more loop iterations need to access an element in memory at the
-same time data races can occur. For instance, if one loop iteration is
-modifying the value contained in a variable and another is trying to read from
-the same variable in parallel, different results may occur depending on which
-iteration occurs first. In serial programs, the sequential loops ensure that
-the variable will be modified and read in a predictable order, but parallel
-programs don't make guarantees that a particular loop iteration will happen
-before another. In simple cases, such as finding a sum, maximum, or minimum
-value, a reduction operation will ensure correctness. For more complex
-operations, the `atomic` directive will ensure that no two threads can attempt
-to perfom the contained operation simultaneously. Use of atomics is sometimes a
-necessary part of parallelization to ensure correctness.
+Quando uma ou mais iterações de loop precisam de aceder a um elemento da memória
+ao mesmo tempo podem ocorrer corridas de dados. Por exemplo, se uma iteração de laço for
+modificando o valor contido numa variável e outra está a tentar ler a partir da mesma variável em paralelo, podem ocorrer resultados diferentes, dependendo de qual
+a iteração ocorre primeiro. Nos programas seriais, os loops sequenciais asseguram que
+a variável será modificada e lida numa ordem previsível, mas programas paralelizados não dão garantias de que uma determinada iteração de laço irá acontecer
+antes de outro. Em casos simples, tais como encontrar uma soma, máxima, ou mínima
+uma operação de redução garantirá a correção do valor. Para mais complexos
+a diretiva `atomic` assegurará que nenhum das duas threads possa tentar executar a operação contida simultaneamente. O uso de atómica é por vezes uma
+parte necessária da paralelização para assegurar a correção.
 
-The `atomic` directive accepts one of four clauses to declare the type of
-operation contained within the region. The `read` operation ensures that no two
-loop iterations will read from the region at the same time. The `write`
-operation will ensure that no two iterations with write to the region at the
-same time. An `update` operation is a combined read and write. Finally a
-`capture` operation performs an update, but saves the value calculated in that
-region to use in the code that follows. If no clause is given, then an update
-operation will occur.
+A diretiva `atomic` aceita uma de quatro cláusulas para declarar o tipo de
+operação contida dentro da região. A operação de `read` assegura que não haja dois
+iterações de laço serão lidas a partir da região ao mesmo tempo. A operação `write`
+assegurará que não haja duas iterações de escrita na região na mesma altura. Uma operação de `update` é uma operação combinada de leitura e escrita. Finalmente, uma
+A operação `capture` efetua uma atualização, mas guarda o valor calculado nessa
+região a utilizar no código que se segue. Se nenhuma cláusula for dada, então uma atualização da
+operação ocorrerá.
 
 ### Atomic Example ###
 
 <!-- ![A histogram of number distribution.](images/histogram.png) -->
 
-A histogram is a common technique for counting up how many times values occur
-from an input set according to their value. The example
-code below loops through a series of integer numbers of a known range and
-counts the occurances of each number in that range. Since each number in the
-range can occur multiple times, we need to ensure that each element in the
-histogram array is updated atomically. The code below demonstrates using the
-`atomic` directive to generate a histogram.
+Um histograma é uma técnica comum para contar o número de vezes que os valores ocorrem
+a partir de um conjunto de entradas de acordo com o seu valor. O exemplo de
+código abaixo realiza iterações através de uma série de números inteiros de uma gama conhecida e
+conta as ocorrências de cada número nesse intervalo. Uma vez que cada número na
+gama pode ocorrer várias vezes, precisamos assegurar que cada elemento do
+conjunto de histogramas é atualizado atomicamente. O código abaixo demonstra a utilização da
+diretiva `atomic` para gerar um histograma.
 
 ~~~~ {.c .numberLines}
     #pragma acc parallel loop
@@ -351,42 +345,36 @@ histogram array is updated atomically. The code below demonstrates using the
     !$acc end parallel loop
 ~~~~
 
-Notice that updates to the histogram array `h` are performed atomically.
-Because we are incrementing the value of the array element, an update operation
-is used to read the value, modify it, and then write it back.
+Note-se que as actualizações da matriz de histogramas `h` são realizadas atomicamente.
+Porque estamos a aumentar o valor do elemento da matriz, uma operação de actualização
+é usado para ler o valor, modificá-lo, e depois escrevê-lo de volta.
 
 Case Study - Parallelize
 ------------------------
-In the last chapter we identified the two loop nests within the convergence
-loop as the most time consuming parts of our application.  Additionally we
-looked at the loops and were able to determine that the outer convergence loop
-is not parallel, but the two loops nested within are safe to parallelize. In
-this chapter we will accelerate those loop nests with OpenACC using the
-directives discussed earlier in this chapter. To further emphasize the
-similarities and differences between `parallel` and `kernels` directives, we
-will accelerate the loops using both and discuss the differences.
+No último capítulo identificámos os dois ninhos de laço no âmbito da convergência
+loop como as partes mais demoradas da nossa aplicação.  Além disso, nós
+olhamos para os laços e fomos capazes de determinar que o laço de convergência exterior
+não é paralelo, mas os dois loops aninhados no seu interior são seguros para serem paralelos. Neste capítulo vamos acelerar esses ninhos de laço com o OpenACC usando as
+diretivas discutidas anteriormente neste capítulo. Para enfatizar ainda mais as semelhanças e diferenças entre as diretivas `parallel` e `kernels`, nós iremos acelerar os laços usando ambos e discutir as diferenças.
 
 ### Parallel Loop ###
-We previously identified the available parallelism in our code, now we will use
-the `parallel loop` directive to accelerate the loops that we identified. Since
-we know that the two doubly-nested sets of loops are parallel, simply add a
-`parallel loop` directive above each of them. This will inform the compiler
-that the outer of the two loops is safely parallel. Some compilers will
-additionally analyze the inner loop and determine that it is also parallel, but
-to be certain we will also add a `loop` directive around the inner loops. 
+Identificamos anteriormente o paralelismo disponível no nosso código, agora vamos utilizar
+a diretiva `parallel loop` para acelerar os laços que identificámos. Sabendo que os dois conjuntos de laços duplamente aninhados são paralelos, basta acrescentar uma diretiva `parallel loop` acima de cada um deles. Isto irá informar o compilador
+que o exterior dos dois laços é seguramente paralelo. Alguns compiladores irão
+além disso, analisaram o laço interno e determinaram que ele também é paralelo, mas
+para termos a certeza de que também acrescentaremos uma diretiva `loop` em torno dos loops internos. 
 
-There is one more subtlety to accelerating the loops in this example: we are
-attempting to calculate the maximum value for the variable `error`. As
-discussed above, this is considered a *reduction* since we are reducing from
-all possible values for `error` down to just the single maximum. This means
-that it is necessary to indicate a reduction on the first loop nest (the one
-that calculates `error`). 
+Há mais uma subtileza para acelerar os loops neste exemplo: nós somos
+tentando calcular o valor máximo para a variável "erro". Como
+discutido acima, isto é considerado uma *redução* uma vez que estamos a reduzir de
+todos os valores possíveis para o "erro" até ao máximo único. Isto significa
+que é necessário indicar uma redução no primeiro ninho de laço (o
+que calcula o "erro"). 
 
-***Best Practice:*** Some compilers will detect the reduction on `error` and
-implicitly insert the `reduction` clause, but for maximum portability the
-programmer should always indicate reductions in the code.
+***Boas Práticas:*** Alguns compiladores detectarão a redução no "erro" e irão
+inserir implicitamente a cláusula de "redução", mas para a máxima portabilidade o programador deve sempre indicar reduções no código.
 
-At this point the code looks like the examples below.
+Neste ponto, o código parece-se com os exemplos abaixo.
 
 ~~~~ {.c .numberLines startFrom="52"}
     while ( error > tol && iter < iter_max )
