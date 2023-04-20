@@ -190,7 +190,7 @@ Nesta altura, muitos programadores ficarão pensando qual diretiva
 devem utilizar no seu código. Os programadores paralelos mais experientes, que podem ter
 já identificado laços paralelos dentro do seu código, encontrarão provavelmente a
 abordagem `parallel loop` mais desejável. Programadores com menos experiência em programação paralela ou cujo código contém um grande número de laços que necessitam
-de análise pode achar a abordagem `kernels' muito mais simples, uma vez que coloca mais de
+de análise pode achar a abordagem `kernels` muito mais simples, uma vez que coloca mais de
 o encargo para o compilador. Ambas as abordagens têm vantagens,  os novos programadores OpenACC
 devem determinar por si próprios qual a abordagem que melhor se adapta. Um programador pode até optar por utilizar `kernels` numa parte do código,
 mas `paralell` na outra, se fizer sentido fazê-lo.
