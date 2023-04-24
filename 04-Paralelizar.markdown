@@ -438,18 +438,14 @@ Neste ponto, o código parece-se com os exemplos abaixo.
     end do
 ~~~~    
 
-***Best Practice:*** Most OpenACC compilers will accept only the `parallel
-loop` directive on the `j` loops and detect for themselves that the `i` loop
-can also be parallelized without needing the `loop` directives on the `i`
-loops. By placing a `loop` directive on each loop that can be
-parallelized, the programmer ensures that the compiler will understand that the
-loop is safe the parallelize. When used within a `parallel` region, the `loop`
-directive asserts that the loop iterations are independent of each other and
-are safe the parallelize and should be used to provide the compiler as much
-information about the loops as possible.
+***Boas Práticas:*** A maioria dos compiladores do OpenACC aceitará apenas a diretiva `parallel loop` sobre os laços `j` e detectam por si próprios que o laço `i`
+também pode ser paralelizado sem necessidade das diretivas "loop" sobre os laços "i".
+Colocando uma diretiva `loop` em cada laço que pode ser
+em paralelo, o programador assegura que o compilador compreenderá que o
+o laço é seguro para o paralelismo. Quando utilizado dentro de uma região `parallel`, a diretiva `loop` assegura que as iterações do laço são independentes umas das outras e  é seguro o paralelismo, e devem ser utilizados para fornecer ao compilador tanto quanto possível
+informações sobre os laços.
 
-Building the above code using the NVHPC compiler produces the
-following compiler feedback (shown for C, but the Fortran output is similar).
+A construção do código acima usando o compilador NVHPC produz o seguinte feedback do compilador (mostrado para C, mas a saída do Fortran é semelhante).
 
     $ nvc -acc -Minfo=accel laplace2d-parallel.c
     main:
@@ -469,23 +465,22 @@ following compiler feedback (shown for C, but the Fortran output is similar).
          70, Loop is parallelizable
 
 
-Analyzing the compiler feedback gives the programmer the ability to ensure that
-the compiler is producing the expected results or fix any problems.
-In the output above we see that accelerator kernels were generated for the two
-loops that were identified (at lines 58 and 71, in the compiled source file)
-and that the compiler automatically generated data movement, which will be
-discussed in more detail in the next chapter.
+A análise do feedback do compilador dá ao programador a capacidade de assegurar que
+o compilador está a produzir os resultados esperados ou a corrigir quaisquer problemas.
+Na saída acima vemos que foram gerados kernels de acelerador para os dois
+laços que foram identificados (nas linhas 58 e 71, no código fonte compilado)
+e que o compilador gerou automaticamente o movimento de dados, que será
+discutido com mais detalhe no próximo capítulo.
 
-Other clauses to the `loop` directive that may further benefit the performance
-of the resulting code will be discussed in a later chapter.  
+Outras cláusulas da directiva `loop` que podem beneficiar ainda mais o desempenho
+do código resultante será discutido num capítulo posterior.   
 
 <!---(***TODO: Link to later chapter when done.***)--->
 
 ### Kernels ###
-Using the `kernels` construct to accelerate the loops we've identified requires
-inserting just one directive in the code and allowing the compiler to perform
-the parallel analysis. Adding a `kernels` construct around the two
-computational loop nests results in the following code.
+A utilização da diretiva `kernels` para acelerar os laços que identificamos requer a
+inserção de apenas uma diretiva no código e permitir que o compilador execute
+a análise paralela. Acrescentar uma construção de `kernels` em torno dos dois ninhos de laços computacionais resulta no seguinte código.
 
 ~~~~ {.c .numberLines startFrom="51"}
     while ( error > tol && iter < iter_max )
@@ -546,20 +541,19 @@ computational loop nests results in the following code.
     end do
 ~~~~    
     
-The above code demonstrates some of the power that the `kernels` construct
-provides, since the compiler will analyze the code and identify both loop nests
-as parallel and it will automatically discover the reduction on the `error`
-variable without programmer intervention. An OpenACC compiler will likely
-discover not only that the outer loops are parallel, but also the inner loops,
-resulting in more available parallelism with fewer directives than the
-`parallel loop` approach. Had the programmer put the `kernels` construct around
-the convergence loop, which we have already determined is not parallel, the
-compiler likely would not have found any available parallelism. Even with the
-`kernels` directive it is necessary for the programmer to do some amount of
-analysis to determine where parallelism may be found.
+O código acima demonstra o poder que a construção `kernels`
+fornece, uma vez que o compilador irá analisar o código e identificar ambos os ninhos de laço
+como paralelo e descobrirá automaticamente a redução sobre a variável `error` sem intervenção do programador. Um compilador OpenACC irá provavelmente
+descobrir não só que os laços exteriores são paralelos, mas também os laços interiores,
+resultando em mais paralelismo disponível com menos diretivas do que a
+abordagem `parallel loop`. Se o programador tivesse colocado a construção de `kernels` em torno do
+o ciclo de convergência, que já determinamos não é paralelo, o
+compilador provavelmente não teria encontrado qualquer paralelismo disponível. Mesmo com a
+diretiva `kernels`, é necessário que o programador faça alguma quantidade de
+análise para determinar onde o paralelismo pode ser encontrado.
 
-Taking a look at the compiler output points to some more subtle differences
-between the two approaches.
+Olhar para a saída do compilador aponta para algumas diferenças mais sutis
+entre as duas abordagens.
 
     $ nvc -acc -Minfo=accel laplace2d-kernels.c
     main:
@@ -577,73 +571,69 @@ between the two approaches.
              68, #pragma acc loop gang, vector(4) /* blockIdx.y threadIdx.y */
              70, #pragma acc loop gang, vector(32) /* blockIdx.x threadIdx.x */
 
-The first thing to notice from the above output is that the compiler correctly
-identified all four loops as being parallelizable and generated kernels from
-those loops. Also notice that the compiler only generated implicit data
-movement directives at line 54 (the beginning of the `kernels` region), rather
-than at the beginning of each `parallel loop`. This means that the resulting
-code should perform fewer copies between host and device memory in this version
-than the version from the previous section. A more subtle difference between
-the output is that the compiler chose a different loop decomposition scheme (as
-is evident by the implicit `acc loop` directives in the compiler output) than
-the parallel loop because `kernels` allowed it to do so. More details on how to
-interpret this decomposition feedback and how to change the behavior will be
-discussed in a later chapter.
+A primeira coisa a notar na saída acima é que o compilador identificou corretamente
+os quatro laços como sendo paralelizáveis e gerou kernels a partir
+desses laços. Nota-se também que o compilador apenas gerou diretivas de movimento de dados implícitos
+ na linha 54 (o início da região `kernels`), em vez de
+do que no início de cada `parallel loop`. Isto significa que o resultado
+o código deve efectuar menos cópias entre o host e a memória do dispositivo nesta versão
+do que a versão da secção anterior. Uma diferença mais subtil entre
+o resultado é que o compilador escolheu um esquema de decomposição de laço diferente (como
+é evidente pelas directivas implícitas `acc loop` na saída do compilador) do que
+o laço paralelo porque o `kernels` lhe permitiu fazê-lo. Mais pormenores sobre como
+interpretar este feedback de decomposição e como mudar o comportamento será
+discutido num capítulo posterior.
 
 ---
 
-At this point we have expressed all of the parallelism in the example code and
-the compiler has parallelized it for an accelerator device. Analyzing the
-performance of this code may yield surprising results on some accelerators,
-however. The results below demonstrate the performance of this code on 1 - 16
-CPU threads on an AMD Threadripper CPU and an NVIDIA Volta V100
-GPU using both implementations above. The *y axis* for figure 3.1 is execution
-time in seconds, so smaller is better. For the two OpenACC versions, the bar is
-divided by time transferring data between the host and device and time executing
-on the device.
+Neste momento, exprimimos todo o paralelismo no código de exemplo e
+o compilador paralelizou-o para um dispositivo acelerador. Analisando
+o desempenho deste código podemos chegar a resultados surpreendentes em alguns aceleradores. 
+Os resultados abaixo demonstram o desempenho deste código em 1 - 16
+threads de CPU num CPU Threadripper AMD e num NVIDIA Volta V100
+GPU usando ambas as implementações acima. O eixo *y* da figura 3.1 é a execução em
+tempo em segundos, por isso menor é melhor. Para as duas versões OpenACC, a barra é
+dividida pelo tempo de transferência de dados entre o host e o dispositivo e o tempo de execução
+no dispositivo.
 
 ![Jacobi Iteration Performance - Step 1](images/jacobi_step1_graph.png)
 
-The performance of this improves as more CPU threads are added to the calculation,
-however, since the code is memory-bound the performance benefit of adding
-additional threads quickly diminishes. Also, the OpenACC versions perform poorly
-compared to the CPU
-baseline. The both the OpenACC `kernels` and `parallel loop` versions perform
-worse than the serial CPU baseline. It is also clear that the `parallel loop` version
-spends significantly more time in data transfer than the `kernels` version.
-Further performance analysis is necessary to
-identify the source of this slowdown. This analysis has already been applied to
-the graph above, which breaks down time spent
-computing the solution and copying data to and from the accelerator.
+O desempenho desta melhora à medida que mais threads de CPU são adicionadas ao cálculo,
+no entanto, uma vez que o código está ligado à memória, o benefício do desempenho da adição
+das threads adicionais diminuem rapidamente. Além disso, as versões OpenACC têm um mau desempenho
+em comparação com a CPU
+linha de base. Tanto as versões OpenACC `kernels' e `parallel loop' atuam
+pior do que a linha de base da CPU em série. É também claro que a versão `parallel loop`
+gasta significativamente mais tempo na transferência de dados do que a versão `kernels`.
+É necessária uma análise mais aprofundada do desempenho para
+identificar a fonte desta desaceleração. Esta análise já foi aplicada ao gráfico acima, que decompõe o tempo gasto
+computando a solução e copiando os dados de e para o acelerador.
 
-A variety of tools are available for performing this analysis, but since this
-case study was compiled for an NVIDIA GPU, NVIDIA Nsight Systems will be
-used to understand the application peformance. The screenshot in figure 3.2
-shows Nsight Systems profile for ***2*** iterations of the convergence loop in
-the `parallel loop` version of the code.
+Há uma variedade de ferramentas disponíveis para a realização desta análise, mas desde que este
+estudo de caso foi compilado para uma GPU NVIDIA, NVIDIA Nsight Systems será
+utilizado para compreender a peformance da aplicação. A captura de ecrã na figura 3.2
+mostra o perfil do Nsight Systems para ***2*** iterações do laço de convergência na
+versão `parallel loop` do código.
 
 ![Screenshot of NVIDIA Nsight Systems Profile on 2 steps of the Jacobi Iteration
 showing a high amount of data transfer compared to
 computation.](images/ch3_profile.png) 
 
-Since the test machine has two distinct memory spaces, one for the CPU and one
-for the GPU, it's necessary to copy data between the two memories. In this
-screenshot, the tool represents data transfers using the tan colored boxes in the
-two *MemCpy* rows and the computation time in the green and purple boxes in the
-rows below *Compute*. It should be obvious from the timeline displayed that
-significantly more time is being spent copying data to and from the
-accelerator before and after each compute kernel than actually computing on the
-device. In fact, the majority of the time is spent either in memory copies or
-in overhead incurred by the runtime scheduling memory copeis. In the next
-chapter we will fix this inefficiency, but first, why does the `kernels`
-version outperform the `parallel loop` version? 
+Uma vez que a máquina de teste tem dois espaços de memória distintos, um para a CPU e outro para a
+para a GPU, é necessário copiar os dados entre as duas memórias. Nesta captura de ecrã, a ferramenta representa transferências de dados utilizando as caixas coloridas bronzeadas nas
+duas linhas *MemCpy* e o tempo de cálculo nas caixas verdes e roxas nas
+linhas abaixo *Compute*. Deve ser óbvio, a partir da linha temporal apresentada, que
+significativamente mais tempo está a ser gasto a copiar dados de e para o
+acelerador antes e depois de cada kernel computado do que realmente computar sobre o
+dispositivo. Na realidade, a maior parte do tempo é gasto em cópias de memória ou
+os overhead incorrido pelo agendamento de memória de tempo de execução. No próximo
+capítulo vamos corrigir esta ineficiência, mas primeiro, porque é que a versão `kernels` supera a versão `parallel loop`? 
 
-When an OpenACC compiler parallelizes a region of code it must analyze the data
-that is needed within that region and copy it to and from the accelerator if
-necessary. This analysis is done at a per-region level and will typically
-default to copying arrays used on the accelerator both to and from the device
-at the beginning and end of the region respectively. Since the `parallel loop`
-version has two compute regions, as opposed to only one in the `kernels`
-version, data is copied back and forth between the two regions. As a result,
-the copy and overhead times are roughly twice that of the `kernels` region,
-although the compute kernel times are roughly the same.
+Quando um compilador OpenACC paraleliza uma região de código, deve analisar os dados
+que são necessários dentro dessa região e copiá-los de e para o acelerador, se
+necessário. Esta análise é feita a um nível por região e, tipicamente
+padrão para copiar matrizes utilizadas no acelerador tanto de e para o dispositivo
+no início e no fim da região, respectivamente. Desde o `parallel loop`
+tem duas regiões de computação, por oposição a apenas uma na versão `kernels`, os dados são copiados para a frente e para trás entre as duas regiões. Como resultado,
+os tempos de cópia e de sobrecarga são cerca do dobro dos tempos da região `kernels`,
+embora os tempos computacionais do kernel sejam aproximadamente os mesmos.
