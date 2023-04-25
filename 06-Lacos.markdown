@@ -121,23 +121,20 @@ definir um comprimento de vetor fixo pode melhorar o desempenho em um processado
 um ciclo pode resultar na limitação do desempenho em processadores com um maior 
 grau de paralelismo.
 
-As discussed earlier in this guide, the `loop` directive is intended to give the
-compiler additional information about the next loop in the code. In addition to
-the clauses shown before, which were intended to ensure correctness, the
-clauses below inform the compiler which level of parallelism should be used to
-for the given loop.
+Como discutido anteriormente neste guia, a diretiva `loop` tem a intenção de dar ao compilador
+informações adicionais sobre o próximo loop no código. Além das cláusulas mostradas anteriormente, que tinham a intenção de garantir a correção, as cláusulas abaixo informam ao compilador qual nível de paralelismo deve ser usado
+para o laço dado.
 
-* Gang clause - partition the loop across gangs
-* Worker clause - partition the loop across workers
-* Vector clause - vectorize the loop
-* Seq clause - do not partition this loop, run it sequentially instead
+* Gang clause - dividir o loop entre as gangs
+* Worker clause - dividir o loop entre os workers
+* Vector clause - vetorizar o loop
+* Seq clause - não particiona o loop, mas executá-o sequencialmente
 
-These directives may also be combined on a particular loop. For example, a
-`gang vector` loop would be partitioned across gangs, each of which with 1
-worker implicitly, and then vectorized. The OpenACC specification enforces that
-the outermost loop must be a gang loop, the innermost parallel loop must be
-a vector loop, and a worker loop may appear in between. A sequential loop may
-appear at any level.
+Estas diretivas podem também ser combinadas num determinado loop. Por exemplo, um loop `gang vector` seria particionado em gangs, cada uma com 1
+trabalhador implicitamente, e então vetorizado. A especificação OpenACC impõe que
+o laço mais externo deve ser um laço gang, o laço paralelo mais interno deve ser
+um loop vectorial, e um loop worker pode aparecer no meio. Um loop seqüencial pode
+aparecer em qualquer nível.
 
 ~~~~ {.c .numberLines}
     #pragma acc parallel loop gang
@@ -156,15 +153,15 @@ appear at any level.
       do i=1,N
 ~~~~
 
-Informing the compiler where to partition the loops is just one part of
-optimizing the loops. The programmer may additionally tell the compiler the
-specific number of gangs, workers, or the vector length to use for the loops.
-This specific mapping is achieved slightly differently when using the `kernels`
-directive or the `parallel` directive. In the case of the `kernels` directive,
-the `gang`, `worker`, and `vector` clauses accept an integer parameter that
-will optionally inform the compiler how to partition that level of parallelism.
-For example, `vector(128)` informs the compiler to use a vector length of 128
-for the loop. 
+Informar ao compilador onde particionar os loops é apenas uma parte da
+optimização dos loops. O programador pode adicionalmente informar ao compilador o
+número específico de gangs, workers, ou o comprimento do vetor a ser usado para os loops.
+Este mapeamento específico é obtido de forma ligeiramente diferente quando se utiliza a diretiva `kernels`
+ou a diretiva `parallel`. No caso da diretiva `kernels`,
+as cláusulas `gang`, `worker` e `vector` aceitam um parâmetro inteiro que
+opcionalmente informará ao compilador como particionar aquele nível de paralelismo.
+Por exemplo, `vector(128)` informa ao compilador para utilizar um vetor com comprimento de 128
+para o loop.  
 
 ~~~~ {.c .numberLines}
     #pragma acc kernels
@@ -189,10 +186,9 @@ for the loop.
     !$acc end kernels
 ~~~~
 
-When using the `parallel` directive, the information is presented
-on the `parallel` directive itself, rather than on each individual loop, in the
-form of the `num_gangs`, `num_workers`, and `vector_length` clauses to the
-`parallel` directive.
+Ao utilizar a diretiva `parallel`, a informação é apresentada
+na própria diretiva `parallel`, ao invés de em cada loop individual, na
+forma das cláusulas `num_gangs`, `num_workers`, e `vector_length` da diretiva `parallel`.
 
 ~~~~ {.c .numberLines}
     #pragma acc parallel loop gang vector_length(128)
@@ -211,17 +207,17 @@ form of the `num_gangs`, `num_workers`, and `vector_length` clauses to the
       do i=1,N
 ~~~~
 
-Since these mappings will vary between different accelerator, the `loop`
-directive accepts a `device_type` clause, which will inform the compiler that
-these clauses only apply to a particular device type. Clauses after a
-`device_type` clause up until either the next `device_type` or the end of the
-directive will apply only to the specified device. Clauses that appear before
-all `device_type` clauses are considered default values, which will be used if
-they are not overridden by a later clause. For example, the code below
-specifies that a vector length of 128 should be used on devices of type
-`acc_device_nvidia` or a vector length of 256 should be used on devices of
-type `acc_device_radeon`. The compiler will choose a default vector length for
-all other device types.
+Uma vez que estes mapeamentos irão variar entre diferentes aceleradores, a directiva `loop`
+aceita uma cláusula `device_type`, que informará ao compilador que
+estas cláusulas só se aplicam a um determinado tipo de dispositivo. Cláusulas após uma cláusula
+`device_type` até o próximo `device_type` ou até o final da diretiva
+aplicar-se-ão apenas ao dispositivo especificado. Cláusulas que aparecem antes de
+todas as cláusulas `device_type` são consideradas valores padrão, que serão usados se
+não forem substituídas por uma cláusula posterior. Por exemplo, o código abaixo
+especifica que um comprimento de vetor de 128 deve ser usado em dispositivos do tipo
+`acc_device_nvidia` ou um comprimento de vetor de 256 deve ser usado em dispositivos do
+tipo `acc_device_radeon`. O compilador escolherá um comprimento de vetor padrão para
+todos os outros tipos de dispositivos.
 
 ~~~~ {.c .numberLines}
     #pragma acc parallel loop gang vector \
@@ -233,21 +229,21 @@ all other device types.
     }
 ~~~~
 
-Collapse Clause
+Cláusula Collapse
 ---------------
-When a code contains tightly nested loops it is frequently beneficial to
-*collapse* these loops into a single loop. Collapsing loops means that two loops
-of trip counts N and M respectively will be automatically turned into a single
-loop with a trip count of N times M. By collapsing two or more parallel loops into a
-single loop the compiler has an increased amount of parallelism to use when
-mapping the code to the device. On highly parallel architectures, such as GPUs,
-this can result in improved performance. Additionally, if a loop lacked
-sufficient parallelism for the hardware by itself, collapsing it with another
-loop multiplies the available parallelism. This is especially beneficial on
-vector loops, since some hardware types will require longer vector lengths to
-achieve high performance than others. Collapsing gang loops may also be beneficial
-if it allows for generating a greater number of gangs for highly-parallel processors.
-The code below demonstrates how to use the collapse directive.
+Quando um código contém loops fortemente aninhados, é frequentemente benéfico
+*colapsar* estes loops num único loop. O colapso de loops significa que dois loops
+de contagem de iterações N e M, respectivamente, serão automaticamente transformados num único
+com uma contagem de viagens de N vezes M. Ao colapsar dois ou mais loops paralelos num
+num único ciclo, o compilador tem uma maior quantidade de paralelismo para usar quando
+mapear o código para o dispositivo. Em arquiteturas altamente paralelas, como as GPUs,
+isso pode resultar em melhor desempenho. Além disso, se um loop não tiver paralelismo
+suficiente para o hardware por si só, colapsá-lo com outro loop
+multiplica o paralelismo disponível. Isso é especialmente benéfico em
+loops vetoriais, já que alguns tipos de hardware exigirão comprimentos de vetor mais longos para
+vetoriais mais longos do que outros para obter alto desempenho. O colapso de loops de grupo também pode ser benéfico
+se permitir a geração de um número maior de grupos para processadores altamente paralelos.
+O código abaixo demonstra como usar a diretiva de collapse.
 
 ~~~~ {.c .numberLines}
     #pragma acc parallel loop gang collapse(2)
@@ -291,56 +287,48 @@ The code below demonstrates how to use the collapse directive.
     enddo
 ~~~~
 
-The above code is an excerpt from a real application where collapsing loops
-extended the parallelism available to be exploited. On line 1, the two
-outermost loops are collapsed together to make it possible to generate *gangs*
-across the iterations of both loops, thus making the possible number of gangs
-`nelemd` x `qsize` rather than just `nelemd`. The collapse at line 4 collapses
-together 3 small loops to increase the possible *vector length*, as none of the
-loops iterate for enough trips to create a reasonable vector length on the
-target accelerator. How much this optimization will speed-up the code will vary
-according to the application and the target accelerator, but it's not uncommon
-to see large speed-ups by using collapse on loop nests.
+O código acima é um excerto de uma aplicação real em que o colapso de loops
+ampliou o paralelismo disponível para ser explorado. Na linha 1, os dois
+loops mais externos são colapsados juntos para possibilitar a geração de *gangs*
+através das iterações de ambos os loops, tornando assim o número possível de gangs
+`nelemd` x `qsize` em vez de apenas `nelemd`. O colapso na linha 4 colapsa
+3 pequenos loops para aumentar o possível *comprimento do vector*, uma vez que nenhum dos loops
+itera por iterações suficientes para criar um comprimento de vetor razoável no
+acelerador alvo. O quanto esta optimização irá acelerar o código irá variar
+de acordo com a aplicação e o acelerador de destino, mas não é incomum
+ver grandes aumentos de velocidade ao usar o colapso em ninhos de loops.
 
-Routine Parallelism
+Paralelismo de Routine
 -------------------
-A previous chapter introduced the `routine` directive for calling functions and
-subroutines from OpenACC parallel regions. In that chapter it was assumed that
-the routine would be called from each loop iteration, therefore requiring a
-`routine seq` directive. In some cases, the routine itself may contain
-parallelism that must be mapped to the device. In these cases, the `routine`
-directive may have a `gang`, `worker`, or `vector` clause instead of `seq` to
-inform the compiler that the routine will contain the specified level of
-parallelism. This can be thought of as _reserving_ a particular level of 
-parallelism for the loops in that routine. This is so that when the compiler
-then encounters the call site of the affected routine, it will then know how
-it can parallelize the code to use the routine. It's important to note that 
-if an `acc routine` calls another routine, that routine must also have an
-`acc routine` directive. At this time the OpenACC specification does not
-allow for specifying multiple possible levels of parallelism on a single
-routine.
+Um capítulo anterior introduziu a directiva `routine` para chamar funções e
+subrotinas a partir de regiões paralelas OpenACC. Naquele capítulo foi assumido que
+a rotina seria chamada a partir de cada iteração do laço, portanto exigindo uma diretiva `routine seq`. Em alguns casos, a própria rotina pode conter
+paralelismo que deve ser mapeado para o dispositivo. Nestes casos, a diretiva `routine`
+pode ter uma cláusula `gang`, `worker`, ou `vector` ao invés de `seq` para
+informar ao compilador que a rotina conterá o nível especificado de
+paralelismo. Isto pode ser pensado como _reserving_ um nível particular de 
+paralelismo para os loops naquela rotina. Isto é para que quando o compilador
+encontrar o local de chamada da rotina afetada, ele saberá como
+pode paralelizar o código para usar a rotina. É importante notar que 
+se uma `rotina acc` chama outra rotina, essa rotina também deve ter uma diretiva `acc routine`. No momento, a especificação do OpenACC não permite especificar vários níveis possíveis de paralelismo em uma única rotina.
 
 Case Study - Optimize Loops
 ---------------------------
-This case study will focus on a different algorithm than the previous chapters.
-When a compiler has sufficient information about loops to make informed
-decisions, it's frequently difficult to improve the performance of a given
-parallel loop by more than a few percent. In some cases, the code lacks the
-information necessary for the compiler to make informed optimization decisions.
-In these cases, it's often possible for a developer to optimize the parallel
-loops significantly by informing the compiler how to decompose and distribute
-the loops to the hardware.
+Este estudo de caso centrar-se-á num algoritmo diferente dos capítulos anteriores.
+Quando um compilador tem informações suficientes sobre loops para tomar decisões informadas, é frequentemente difícil melhorar o desempenho de um determinado laço paralelo em mais do que alguns por cento. Em alguns casos, o código não possui as
+informações necessárias para que o compilador tome decisões de optimização informadas.
+Nesses casos, muitas vezes é possível para um desenvolvedor otimizar significativamente os loops paralelos, informando ao compilador como decompor e distribuir
+os loops para o hardware.
 
-The code used in this section implements a sparse, matrix-vector product (SpMV)
-operation. This means that a matrix and a vector will be multiplied together,
-but the matrix has very few elements that are not zero (it is *sparse*),
-meaning that calculating these values is unnecessary. The matrix is stored in a
-Compress Sparse Row (CSR) format. In CSR the sparse array, which may contain a
-significant number of cells whose value is zero, thus wasting a significant
-amount of memory, is stored using three, smaller arrays: one containing the
-non-zero values from the matrix, a second that describes where in a given row
-these non-zero elements would reside, and a third describing the columns in
-which the data would reside. The code for this exercise is below.
+O código utilizado nesta secção implementa uma operação de produto esparso de matriz e vector (SpMV)
+esparsa. Isto significa que uma matriz e um vector serão multiplicados em conjunto,
+mas a matriz tem muito poucos elementos que não são zero (é *esparsa*),
+o que significa que o cálculo destes valores é desnecessário. A matriz é armazenada numa
+formato Compress Sparse Row (CSR). No CSR, a matriz esparsa, que pode conter um
+número significativo de células cujo valor é zero, desperdiçando assim uma
+quantidade significativa de memória, é armazenada utilizando três matrizes mais pequenas: uma contendo os valores
+valores não nulos da matriz, uma segunda que descreve onde numa dada linha
+e uma terceira que descreve as colunas em que os dados residiriam. O código para este exercício está abaixo.
 
 ~~~~ {.c .numberLines}
     #pragma acc parallel loop
@@ -378,23 +366,23 @@ which the data would reside. The code for this exercise is below.
     enddo
 ~~~~
 
-One important thing to note about this code is that the compiler is unable to
-determine how many non-zeros each row will contain and use that information in
-order to schedule the loops. The developer knows, however, that the number of
-non-zero elements per row is very small and this detail will be key to
-achieving high performance. 
+Uma coisa importante a notar sobre este código é que o compilador não é capaz de
+determinar quantos não-zeros cada linha conterá e usar essa informação para
+para programar os loops. O programador sabe, no entanto, que o número de
+elementos não nulos por linha é muito pequeno e este pormenor será fundamental para
+para obter um elevado desempenho. 
 
-***NOTE: Because this case study features optimization techniques, it is
-necessary to perform optimizations that may be beneficial on one hardware, but
-not on others. This case study was performed using the NVHPC 20.11 compiler on an
-NVIDIA Volta V100 GPU. These same techniques may apply on other architectures,
-particularly those similar to NVIDIA GPUs, but it will be necessary to make
-certain optimization decisions based on the particular accelerator in use.***
+***NOTA: Como este estudo de caso apresenta técnicas de optimização, será
+necessário realizar optimizações que podem ser benéficas num hardware, mas
+não em outros. Este estudo de caso foi realizado usando o compilador NVHPC 20.11 em uma GPU
+GPU NVIDIA Volta V100. Estas mesmas técnicas podem ser aplicadas em outras arquiteturas,
+particularmente aquelas semelhantes às GPUs NVIDIA, mas será necessário tomar
+certas decisões de optimização baseadas no acelerador específico em uso.***
 
-In examining the compiler feedback from the code shown below, I know that the
-compiler has chosen to use a vector length of 256 on the innermost loop. I
-could have also obtained this information from a runtime profile of the
-application. 
+Ao examinar o feedback do compilador a partir do código mostrado abaixo, sei que o compilador
+optou por usar um comprimento de vetor de 256 no loop mais interno. Eu
+poderia também ter obtido essa informação de um perfil de tempo de execução da
+aplicação. 
 
 ~~~~
     matvec(const matrix &, const vector &, const vector &):
@@ -406,15 +394,15 @@ application.
           9, Loop is parallelizable
 ~~~~
 
-Based on my knowledge of the matrix, I know that this is
-significantly larger than the typical number of non-zeros per row, so many of
-the *vector lanes* on the accelerator will be wasted because there's not
-sufficient work for them. The first thing to try in order to improve
-performance is to adjust the vector length used on the innermost loop. I happen
-to know that the compiler I'm using will restrict me to using multiples of the
-*warp size* (the minimum SIMT execution size on NVIDIA GPUs) of this processor,
-which is 32. This detail will vary according to the accelerator of choice.
-Below is the modified code using a vector length of 32.
+Com base no meu conhecimento da matriz, sei que isto é
+significativamente maior do que o número típico de não-zeros por linha, pelo que muitas
+das *vector lanes* no acelerador serão desperdiçadas porque não há
+trabalho suficiente para elas. A primeira coisa a tentar para melhorar o
+desempenho é ajustar o comprimento do vetor usado no loop mais interno. Acontece que
+sei que o compilador que estou a usar vai restringir-me a usar múltiplos do
+*(o tamanho mínimo de execução do SIMT em GPUs NVIDIA) deste processador,
+que é 32. Esse detalhe vai variar de acordo com o acelerador escolhido.
+Abaixo está o código modificado usando um comprimento de vetor de 32.
 
 
 ~~~~ {.c .numberLines}
@@ -453,25 +441,24 @@ Below is the modified code using a vector length of 32.
     enddo
 ~~~~
 
-Notice that I have now explicitly informed the compiler that the innermost loop
-should be a vector loop, to ensure that the compiler will map the parallelism
-exactly how I wish. I can try different vector lengths to find the optimal
-value for my accelerator by modifying the `vector_length` clause. Below is a graph
-showing the relative speed-up of varying the vector length
-compared to the compiler-selected value.
+Observe que agora informei explicitamente ao compilador que o loop mais interno
+deve ser um laço vetorial, para garantir que o compilador mapeará o paralelismo
+exactamente como eu quero. Eu posso tentar diferentes comprimentos de vetor para encontrar o valor ótimo
+ideal para o meu acelerador, modificando a cláusula `vector_length`. Abaixo está um gráfico
+mostrando a velocidade relativa da variação do comprimento do vetor
+comparado com o valor selecionado pelo compilador.
 
 ![Relative speed-up from varying vector_length from the default value of
 128](images/spmv_speedup_vector_length.png)
 
-Notice that the best performance comes from the smallest vector length. Again,
-this is because the number of non-zeros per row is very small, so a small
-vector length results in fewer wasted compute resources. On the particular chip
-I'm using, the smallest possible vector length, 32, achieves the best possible
-performance. On this particular accelerator, I also know that the hardware will
-not perform efficiently at this vector length unless we can identify further
-parallelism another way. In this case, we can use the *worker* level of
-parallelism to fill each *gang* with more of these short vectors. Below is the
-modified code.
+Repare-se que o melhor desempenho é obtido com o vector de menor comprimento. Mais uma vez,
+isto deve-se ao facto de o número de não-zeros por linha ser muito pequeno, pelo que um
+comprimento do vector resulta em menos recursos computacionais desperdiçados. No chip específico
+estou a usar, o menor comprimento de vector possível, 32, atinge o melhor
+desempenho possível. Neste acelerador em particular, eu também sei que o hardware
+não terá um desempenho eficiente com esse comprimento de vetor, a menos que possamos identificar mais
+paralelismo de outra forma. Neste caso, podemos usar o nível *worker* para preencher cada *gang* com mais desses vetores curtos. Abaixo está o
+código modificado.
 
 ~~~~ {.c .numberLines}
     #pragma acc parallel loop gang worker num_workers(4) vector_length(32)
@@ -509,25 +496,23 @@ modified code.
     enddo
 ~~~~
 
-In this version of the code, I've explicitly mapped the outermost loop to both
-gang and worker parallelism and will vary the number of workers using the
-`num_workers` clause. The results follow.
+Nesta versão do código, mapeei explicitamente o loop mais externo para ambos
+e para o paralelismo de workers e vou variar o número de workers usando a cláusula
+cláusula `num_workers`. Os resultados são os seguintes.
 
 ![Speed-up from varying number of workers for a vector length of
 32.](images/spmv_speedup_num_workers.png)
 
-On this particular hardware, the best performance comes from a vector length of
-32 and 4 workers, which is similar to the simpler loop with a default vector length of 128.
-In this case, we
-observed a 2.5X speed-up from decreasing the vector length and another 1.26X
-speed-up from varying the number of workers within each gang, resulting in an
-overall 3.15X performance improvement from the untuned OpenACC code.
+Neste hardware em particular, o melhor desempenho vem de um comprimento de vector de
+32 e 4 workers, o que é semelhante ao loop mais simples com um comprimento de vector predefinido de 128.
+Neste caso, nós
+observámos um aumento de velocidade de 2,5X ao diminuir o comprimento do vector e outro aumento de 1,26X
+ao variar o número de workers em cada grupo, resultando numa melhoria geral de 3,15X no desempenho em relação ao código OpenACC não ajustado.
 
-***Best Practice:*** Although not shown in order to save space, it's generally
-best to use the `device_type` clause whenever specifying the sorts of
-optimizations demonstrated in this section, because these clauses will likely
-differ from accelerator to accelerator. By using the `device_type` clause it's
-possible to provide this information only on accelerators where the
-optimizations apply and allow the compiler to make its own decisions on other
-architectures. The OpenACC specification specifically suggests `nvidia`,
-`radeon`, and `host` as three common device type strings.
+***Boas Práticas:*** Embora não seja mostrado para economizar espaço, é geralmente
+melhor usar a cláusula `device_type` sempre que especificar os tipos de
+otimizações demonstradas nesta seção, porque estas cláusulas provavelmente
+diferem de acelerador para acelerador. Ao utilizar a cláusula `device_type` é possível fornecer esta informação apenas em aceleradores onde as
+otimizações se aplicam e permitir que o compilador tome suas próprias decisões em outras
+arquiteturas. A especificação OpenACC sugere especificamente `nvidia`,
+`radeon`, e `host` como três strings comuns de tipo de dispositivo.
