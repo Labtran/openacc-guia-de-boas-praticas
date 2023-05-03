@@ -1,4 +1,4 @@
-OpenACC Interoperability
+OpenACC Interoperabilidade
 ========================
 Os autores do OpenACC reconheceram que, por vezes, pode ser benéfico misturar OpenACC com código acelerado usando outras linguagens de programação paralela,
 como CUDA ou OpenCL, ou bibliotecas matemáticas aceleradas. Essa interoperabilidade
