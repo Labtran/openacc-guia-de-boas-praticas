@@ -429,26 +429,23 @@ que deve ser usado e é funcionalmente equivalente à diretiva
 
 ---
 
-### Multi-device Programming Example ###
-As a example of multi-device programming, it's possible to further extend the
-mandelbrot example used previously to send different blocks of work to
-different accelerators. In order to make this work, it's necessary to ensure
-that device copies of the data are created on each device. We will do this by
-replacing the structured `data` region in the code with an unstructured `enter data` 
-directive for each device, using the `acc_set_device_num()` function to
-specify the device for each `enter data`. For simplicity, we will allocate the
-full image array on each device, although only a part of the array is actually
-needed. When the memory requirements of the application is large, it will be
-necessary to allocate just the pertinent parts of the data on each accelerator.
+### Exemplo de programação multi-dispositivo ###
+Como exemplo de programação multi-dispositivo, é possível alargar o exemplo de mandelbrot usado anteriormente para enviar diferentes blocos de trabalho para
+diferentes aceleradores. Para que isso funcione, é necessário garantir
+que sejam criadas cópias dos dados em cada dispositivo. Nós faremos isso
+substituindo a região estruturada `data` no código por uma diretiva não estruturada `enter data` para cada dispositivo, utilizando a função `acc_set_device_num()` para
+especificar o dispositivo para cada `enter data`. Para simplificar, nós alocaremos o array de imagens completo em cada dispositivo, embora apenas uma parte do array seja
+necessária. Quando os requisitos de memória da aplicação forem grandes, será
+necessário alocar apenas as partes pertinentes dos dados em cada acelerador.
 
-Once the data has been created on each device, a call to `acc_set_device_num()`
-in the blocking loop, using a simple modulus operation to select which device
-should receive each block, will sent blocks to different devices. 
+Uma vez que os dados tenham sido criados em cada dispositivo, uma chamada a `acc_set_device_num()`
+no loop de bloqueio, usando uma operação simples de módulo para selecionar qual dispositivo
+deve receber cada bloco, enviará blocos para diferentes dispositivos.  
 
-Lastly it's necessary to introduce a loop over devices to wait on each device
-to complete. Since the `wait` directive is per-device, the loop will once again
-use `acc_set_device_num()` to select a device to wait on, and then use an
-`exit data` directive to deallocate the device memory. The final code is below.
+Por fim, é necessário introduzir um loop sobre os dispositivos para esperar que cada dispositivo
+para completar. Como a diretiva `wait` é por dispositivo, o loop irá mais uma vez
+utilizar `acc_set_device_num()` para selecionar um dispositivo para esperar, e então utilizar uma diretiva
+`exit data` para desalocar a memória do dispositivo. O código final está abaixo.
 
 ~~~~ {.c .numberLines}
     // Allocate arrays on both devices
@@ -509,14 +506,14 @@ use `acc_set_device_num()` to select a device to wait on, and then use an
     enddo
 ~~~~
 
-Although this example over-allocates device memory by placing the entire image array
-on the device, it does serve as a simple example of how the `acc_set_device_num()`
-routine can be used to operate on a machine with multiple devices. In
-production codes the developer will likely want to partition the work such that
-only the parts of the array needed by a specific device are available there.
-Additionally, by using CPU threads it may be possible to issue work to the
-devices more quickly and improve overall performance. Figure 7.3
-shows a screenshot of the NVIDIA NSight Systems showing the mandelbrot
-computation divided across two NVIDIA GPUs.
+Embora este exemplo aloque demais a memória do dispositivo ao colocar todo o array de imagens
+no dispositivo, ele serve como um exemplo simples de como a rotina `acc_set_device_num()`
+pode ser utilizada para operar em uma máquina com múltiplos dispositivos. Em
+códigos de produção o desenvolvedor provavelmente vai querer particionar o trabalho de forma que
+apenas as partes do array necessárias para um dispositivo específico estejam disponíveis lá.
+Além disso, ao usar threads da CPU, pode ser possível enviar trabalho para os
+dispositivos mais rapidamente e melhorar o desempenho geral. A Figura 7.3
+apresenta uma captura de ecrã dos sistemas NVIDIA NSight que mostra o cálculo de Mandelbrot
+dividido em duas GPUs NVIDIA.
 
 ![NVIDIA NSight Systems timeline for multi-device mandelbrot](images/multigpu_mandelbrot_timeline_nsight.png)
